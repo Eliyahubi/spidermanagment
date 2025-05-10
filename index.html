@@ -133,7 +133,7 @@
         #chartContainer {
             margin-top: 30px;
             padding: 20px;
-            background-color: #fff; /* רקע לבן לקונטיינר של הגרף לתצוגה רגילה */
+            background-color: #fff; 
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             min-height: 500px;
@@ -223,9 +223,6 @@
 </div>
 
 <script>
-// רישום התוסף באופן גלובלי (בדרך כלל לא נדרש אם טוענים דרך תג script, אבל ליתר ביטחון)
-// Chart.register(ChartDataLabels); // בגרסאות חדשות של Chart.js ו-chartjs-plugin-datalabels, זה לרוב אוטומטי
-
 let config = {
     "מנהיגות והשראה": [
         "אני מצליח/ה לרתום אנשים לחזון ולמטרות משותפות",
@@ -300,20 +297,26 @@ function renderForm() {
                     <label for="${questionId}">${q}</label>
                     <div class="slider-container">
                         <input type="range" id="${questionId}" min="1" max="10" value="5" step="1" data-domain="${domain}" oninput="updateSliderValue(this)">
-                        <span class="slider-value" id="${questionId}-value">5</span>
+                        <span class="slider-value" id="${questionId}-value">5</span> 
                     </div>
                 </div>`;
         });
         html += `</div>`;
     });
     formDiv.innerHTML = html;
+
+    // Ensure all initial slider values are displayed correctly by calling updateSliderValue for each
+    const allSliders = formDiv.querySelectorAll('input[type=range]');
+    allSliders.forEach(slider => {
+        updateSliderValue(slider); 
+    });
 }
 
 // Function to update the displayed value of a slider
 function updateSliderValue(slider) {
     const valueSpan = document.getElementById(`${slider.id}-value`);
     if (valueSpan) {
-        valueSpan.textContent = slider.value; // Changed: No need for parseFloat or toFixed for integer steps
+        valueSpan.textContent = slider.value;
     }
 }
 
@@ -325,7 +328,7 @@ function submitAnswers() {
 
     inputs.forEach(input => {
         const domain = input.dataset.domain;
-        const value = parseFloat(input.value); // Keep parseFloat here as values are read from input
+        const value = parseFloat(input.value); 
         domainScores[domain] = (domainScores[domain] || 0) + value;
         counts[domain] = (counts[domain] || 0) + 1;
     });
@@ -365,11 +368,11 @@ function submitAnswers() {
             maintainAspectRatio: false,
             scales: {
                 r: {
-                    min: 0, // Or 1 if you want the scale to start at 1
-                    max: 10, // Changed: Max value for the scale
-                    beginAtZero: true, // Or false if min is 1
+                    min: 0, 
+                    max: 10, 
+                    beginAtZero: true, 
                     ticks: {
-                        stepSize: 1, // Changed: Step size for scale ticks
+                        stepSize: 1, 
                         display: true,
                         backdropColor: 'transparent',
                         color: '#495057',
@@ -377,11 +380,10 @@ function submitAnswers() {
                             size: 10
                         },
                         callback: function(value) {
-                            // Changed: Display whole numbers for ticks
                             if (Number.isInteger(value)) {
                                 return value.toString();
                             }
-                            return value; // Fallback for non-integer values if any (though stepSize=1 should prevent this)
+                            return value; 
                         }
                     },
                     grid: {
@@ -425,14 +427,12 @@ function submitAnswers() {
                                 label += ': ';
                             }
                             if (context.parsed.r !== null) {
-                                // Changed: Format tooltip value to one decimal place or integer as appropriate
-                                label += Number(context.parsed.r.toFixed(1)); // Can also be toFixed(0) if strictly integers
+                                label += Number(context.parsed.r.toFixed(1)); 
                             }
                             return label;
                         }
                     }
                 },
-                // הגדרות עבור chartjs-plugin-datalabels
                 datalabels: {
                     display: true,
                     align: 'top',
@@ -454,18 +454,15 @@ function submitAnswers() {
                         size: 10
                     },
                     formatter: function(value, context) {
-                        // Changed: Format datalabel value
-                        return Number(value.toFixed(1)); // Can also be toFixed(0) if strictly integers
+                        return Number(value.toFixed(1)); 
                     }
                 }
             }
         },
-        // רישום התוסף באופן מקומי עבור הגרף הספציפי הזה (מומלץ)
         plugins: [ChartDataLabels]
     });
 }
 
-// Function to export the chart as a PNG image with a white background
 function exportChartImage() {
     if (!chartInstance) {
         alert("אנא צור גרף תחילה על ידי לחיצה על 'שלח וסכם'.");
@@ -490,8 +487,6 @@ function exportChartImage() {
     document.body.removeChild(a);
 }
 
-
-// Function to open mail client for sending the chart
 function sendChartByEmail() {
     const emailAddress = document.getElementById('email').value;
     const fullName = document.getElementById('fullName').value || "משתמש";
@@ -519,8 +514,6 @@ function sendChartByEmail() {
     alert("חלון האימייל שלך אמור להיפתח. אנא הורד את תמונת הגרף (עם רקע לבן) באמצעות כפתור 'הורד גרף כתמונה' וצרף אותה להודעה לפני השליחה.");
 }
 
-
-// Function to toggle the admin panel visibility
 function toggleAdmin() {
     const code = document.getElementById('adminCode').value;
     const adminPanel = document.getElementById('adminPanel');
@@ -536,13 +529,12 @@ function toggleAdmin() {
     document.getElementById('adminCode').value = '';
 }
 
-// Function to save new configuration from admin panel
 function saveConfig() {
     try {
         const newConfigText = document.getElementById('adminConfig').value;
         const newConfig = JSON.parse(newConfigText);
         config = newConfig;
-        renderForm();
+        renderForm(); // קריאה ל-renderForm תדאג לעדכן את ערכי ה-span
         if (chartInstance) {
             chartInstance.destroy();
             chartInstance = null;
@@ -554,9 +546,8 @@ function saveConfig() {
     }
 }
 
-// Initial rendering of the form when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    renderForm();
+    renderForm(); // קריאה ל-renderForm תדאג לעדכן את ערכי ה-span
 });
 </script>
 
