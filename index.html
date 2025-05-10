@@ -300,7 +300,7 @@ function renderForm() {
                     <label for="${questionId}">${q}</label>
                     <div class="slider-container">
                         <input type="range" id="${questionId}" min="1" max="10" value="5" step="1" data-domain="${domain}" oninput="updateSliderValue(this)">
-                        <span class="slider-value" id="${questionId}-value">3.0</span>
+                        <span class="slider-value" id="${questionId}-value">5</span>
                     </div>
                 </div>`;
         });
@@ -313,7 +313,7 @@ function renderForm() {
 function updateSliderValue(slider) {
     const valueSpan = document.getElementById(`${slider.id}-value`);
     if (valueSpan) {
-        valueSpan.textContent = parseFloat(slider.value).toFixed(1);
+        valueSpan.textContent = slider.value; // Changed: No need for parseFloat or toFixed for integer steps
     }
 }
 
@@ -325,7 +325,7 @@ function submitAnswers() {
 
     inputs.forEach(input => {
         const domain = input.dataset.domain;
-        const value = parseFloat(input.value);
+        const value = parseFloat(input.value); // Keep parseFloat here as values are read from input
         domainScores[domain] = (domainScores[domain] || 0) + value;
         counts[domain] = (counts[domain] || 0) + 1;
     });
@@ -365,11 +365,11 @@ function submitAnswers() {
             maintainAspectRatio: false,
             scales: {
                 r: {
-                    min: 0,
-                    max: 5,
-                    beginAtZero: true,
+                    min: 0, // Or 1 if you want the scale to start at 1
+                    max: 10, // Changed: Max value for the scale
+                    beginAtZero: true, // Or false if min is 1
                     ticks: {
-                        stepSize: 0.2,
+                        stepSize: 1, // Changed: Step size for scale ticks
                         display: true,
                         backdropColor: 'transparent',
                         color: '#495057',
@@ -377,7 +377,11 @@ function submitAnswers() {
                             size: 10
                         },
                         callback: function(value) {
-                            return value.toFixed(1);
+                            // Changed: Display whole numbers for ticks
+                            if (Number.isInteger(value)) {
+                                return value.toString();
+                            }
+                            return value; // Fallback for non-integer values if any (though stepSize=1 should prevent this)
                         }
                     },
                     grid: {
@@ -421,7 +425,8 @@ function submitAnswers() {
                                 label += ': ';
                             }
                             if (context.parsed.r !== null) {
-                                label += context.parsed.r.toFixed(1);
+                                // Changed: Format tooltip value to one decimal place or integer as appropriate
+                                label += Number(context.parsed.r.toFixed(1)); // Can also be toFixed(0) if strictly integers
                             }
                             return label;
                         }
@@ -430,15 +435,15 @@ function submitAnswers() {
                 // הגדרות עבור chartjs-plugin-datalabels
                 datalabels: {
                     display: true,
-                    align: 'top', // מיקום התווית מעל הנקודה
-                    anchor: 'end', // עוגן בקצה הנקודה
-                    offset: 8, // הרחקה קלה מהנקודה
-                    color: '#333333', // צבע הטקסט של התווית
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)', // רקע חצי שקוף לתווית
-                    borderColor: 'rgba(0, 123, 255, 0.5)', // צבע מסגרת לתווית
-                    borderWidth: 1, // עובי מסגרת
-                    borderRadius: 4, // עיגול פינות
-                    padding: { // ריווח פנימי
+                    align: 'top',
+                    anchor: 'end',
+                    offset: 8,
+                    color: '#333333',
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    borderColor: 'rgba(0, 123, 255, 0.5)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    padding: {
                         top: 3,
                         bottom: 3,
                         left: 5,
@@ -449,8 +454,8 @@ function submitAnswers() {
                         size: 10
                     },
                     formatter: function(value, context) {
-                        // הצגת הערך עם ספרה אחת אחרי הנקודה
-                        return value.toFixed(1);
+                        // Changed: Format datalabel value
+                        return Number(value.toFixed(1)); // Can also be toFixed(0) if strictly integers
                     }
                 }
             }
@@ -467,25 +472,19 @@ function exportChartImage() {
         return;
     }
     const canvas = document.getElementById('chart');
-    const tempCanvas = document.createElement('canvas'); // יצירת קנבס זמני
+    const tempCanvas = document.createElement('canvas');
     tempCanvas.width = canvas.width;
     tempCanvas.height = canvas.height;
     const tempCtx = tempCanvas.getContext('2d');
 
-    // 1. צייר רקע לבן על הקנבס הזמני
     tempCtx.fillStyle = 'white';
     tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-    // 2. צייר את הגרף הקיים על הקנבס הזמני (מעל הרקע הלבן)
-    //    הדרך הפשוטה היא לצייר את תמונת הקנבס המקורי
     tempCtx.drawImage(canvas, 0, 0);
 
-    // יצירת URL מהקנבס הזמני (שכעת יש לו רקע לבן)
     const imageURL = tempCanvas.toDataURL('image/png');
-
     const a = document.createElement('a');
     a.href = imageURL;
-    a.download = 'spider_chart_white_bg.png'; // שינוי שם הקובץ לציון הרקע
+    a.download = 'spider_chart_white_bg.png';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -508,10 +507,8 @@ function sendChartByEmail() {
 
     const subject = `מיפוי עכביש עבור ${fullName}`;
     const body = `שלום ${fullName},\n\nמצורפת בזאת תמונת גרף העכביש שלך.\nאנא הורד את התמונה באמצעות כפתור "הורד גרף כתמונה" וצרף אותה למייל זה.\n\nבברכה,\nצוות מיפוי מנהלים`;
-
     const mailtoLink = `mailto:${encodeURIComponent(emailAddress)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-    // נסה לפתוח את קישור ה-mailto
     try {
         window.location.href = mailtoLink;
     } catch (e) {
